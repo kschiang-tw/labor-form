@@ -94,7 +94,7 @@ npm run serve        # 本機預覽 http://localhost:8080
 E2E_DOCX=a.docx,b.docx E2E_SIGNATURE=sign.png E2E_ID_FRONT=front.jpg E2E_ID_BACK=back.jpg npm run e2e
 ```
 
-**修改任何 app 檔案後，請把 `sw.js` 裡的 `VERSION` 改掉**，已安裝的裝置才會收到更新。新增檔案時也要加進 `ASSETS` 清單（`npm test` 會檢查）。
+**修改任何 app 檔案後，請把 `sw.js` 裡的 `VERSION` 改掉**，已安裝的裝置才會收到更新；`index.html` 頁尾顯示的版本號也要改成一樣（`npm test` 會檢查兩邊一致）。新增檔案時也要加進 `ASSETS` 清單（`npm test` 會檢查）。
 
 ### 授權
 

@@ -25,6 +25,14 @@ test('金額', () => {
   assert.equal(formatAmount(1234567), '1,234,567');
 });
 
+test('頁尾版本號跟 Service Worker 的 VERSION 一致', () => {
+  const sw = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const version = /const VERSION = '([^']+)'/.exec(sw)?.[1];
+  assert.ok(version, 'sw.js 要有 VERSION');
+  assert.equal(/id="app-version">([^<]+)</.exec(html)?.[1], version);
+});
+
 test('Service Worker 快取清單涵蓋所有 app 檔案', () => {
   const sw = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
   const listed = new Set([...sw.matchAll(/'([^']+\.(?:js|css|html|woff2|png|webmanifest))'/g)].map((m) => m[1]));
