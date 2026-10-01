@@ -1,5 +1,5 @@
 {
-  "name": "labor-remuneration-form",
+  "name": "labor-form",
   "private": true,
   "type": "module",
   "description": "勞務報酬單離線 PWA：把公司的 docx 加上地址、簽名、身分證影本後合併成 PDF",

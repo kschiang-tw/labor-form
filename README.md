@@ -26,7 +26,7 @@ GitHub 免費方案只有公開 repo 能用 Pages。公開的只有程式碼，�
 2. **Settings** → **Pages** → **Build and deployment**：
    - Source 選 **Deploy from a branch**
    - Branch 選 **main**，資料夾選 **/ (root)**，按 **Save**
-3. 等一兩分鐘，頁面上方會出現網址，例如 `https://<你的帳號>.github.io/Labor-Remuneration-Form-for-Fred/`。
+3. 等一兩分鐘，頁面上方會出現網址，也就是 `https://kschiang-tw.github.io/labor-form/`。
 
 ### 2. 裝到 iPad／手機
 
