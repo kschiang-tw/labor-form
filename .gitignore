@@ -1,0 +1,13 @@
+# 個資保護：真實的 Word 檔、產生的 PDF、身分證或簽名圖片一律不准進版控。
+# 測試只用 tests/ 裡程式自動產生的假資料。
+*.docx
+*.doc
+*.pdf
+*.heic
+*.jpg
+*.jpeg
+private/
+tests/output/
+
+node_modules/
+.DS_Store

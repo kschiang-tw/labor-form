@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- 安全政策：頁面不能連到任何外部網址，也不能用 fetch/XHR 把資料送出去 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'none'; worker-src 'self'; manifest-src 'self'; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>勞務報酬單</title>
+<meta name="description" content="把公司給的勞務報酬單 Word 檔，自動加上通訊地址、簽名和身分證影本，合併成一份 PDF。完全離線，個資只存在自己的裝置。">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f5f4a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="勞報單">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/app.css">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <img src="icons/icon-192.png" alt="" width="40" height="40">
+    <div>
+      <h1>勞務報酬單</h1>
+      <p>個資只存在這台裝置</p>
+    </div>
+  </div>
+  <span id="offline" class="pill">檢查離線狀態…</span>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab" role="tab" id="tab-btn-make" data-tab="make" aria-controls="tab-make" aria-selected="true">產生 PDF</button>
+  <button class="tab" role="tab" id="tab-btn-me" data-tab="me" aria-controls="tab-me" aria-selected="false">我的資料<span class="dot" id="me-dot" hidden></span></button>
+</nav>
+
+<main>
+  <section id="tab-make" class="panel" role="tabpanel" aria-labelledby="tab-btn-make">
+    <div id="setup-notice" class="notice warn" hidden>
+      <p><strong>還沒設定：</strong><span id="setup-missing"></span></p>
+      <button class="btn small" data-goto="me">去設定</button>
+    </div>
+
+    <label class="drop" id="drop">
+      <input type="file" id="docx-input" class="visually-hidden" multiple
+             accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+      <svg class="drop-icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M12 6h17l9 9v27H12z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M29 6v9h9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M25 37V22m-6 6 6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="drop-title">選擇這個月的 Word 檔</span>
+      <span class="drop-sub">可以一次選好幾個 .docx。檔案只在這台裝置上讀取，不會上傳。</span>
+    </label>
+    <div id="file-errors" class="errors" aria-live="polite"></div>
+
+    <div id="list-head" class="list-head" hidden>
+      <h2>共 <span id="count">0</span> 份</h2>
+      <span id="total" class="muted"></span>
+    </div>
+    <ol id="forms" class="forms"></ol>
+
+    <div id="make-box" class="make-box" hidden>
+      <label class="field">
+        <span>PDF 檔名</span>
+        <input id="pdf-name" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="actions">
+        <button id="clear-forms" class="btn ghost" type="button">清空清單</button>
+        <button id="make-pdf" class="btn primary grow" type="button">產生 PDF</button>
+      </div>
+      <p id="progress" class="progress" hidden></p>
+    </div>
+
+    <div id="result" class="result" hidden>
+      <div class="result-head">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div>
+          <strong id="result-name">PDF 完成</strong>
+          <span id="result-info" class="muted"></span>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="share-pdf" class="btn primary grow" type="button">分享／儲存到「檔案」</button>
+        <a id="download-pdf" class="btn ghost" download>下載</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-me" class="panel" role="tabpanel" aria-labelledby="tab-btn-me" hidden>
+    <article class="card">
+      <h2>通訊地址</h2>
+      <textarea id="address" rows="2" placeholder="例：103 台北市大同區○○路 1 號 5 樓"></textarea>
+      <p class="hint" id="address-state">輸入後會自動儲存</p>
+    </article>
+
+    <article class="card">
+      <h2>簽名</h2>
+      <div class="sig-preview"><canvas id="sig-preview" aria-label="簽名預覽"></canvas></div>
+      <div class="actions">
+        <button class="btn" id="sig-draw" type="button">手寫簽名</button>
+        <label class="btn">匯入簽名圖片<input type="file" id="sig-file" accept="image/*" class="visually-hidden"></label>
+        <button class="btn ghost danger" id="sig-del" type="button" hidden>刪除</button>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2>身分證影本</h2>
+      <div class="id-grid">
+        <figure class="id-slot" data-key="idFront">
+          <div class="id-img"><img alt="身分證正面" hidden><span class="empty">尚未設定</span></div>
+          <figcaption>正面</figcaption>
+          <div class="actions">
+            <label class="btn">選擇照片<input type="file" accept="image/*" class="visually-hidden" data-id-input="idFront"></label>
+            <button class="btn ghost danger" type="button" data-id-del="idFront" hidden>刪除</button>
+          </div>
+        </figure>
+        <figure class="id-slot" data-key="idBack">
+          <div class="id-img"><img alt="身分證反面" hidden><span class="empty">尚未設定</span></div>
+          <figcaption>反面</figcaption>
+          <div class="actions">
+            <label class="btn">選擇照片<input type="file" accept="image/*" class="visually-hidden" data-id-input="idBack"></label>
+            <button class="btn ghost danger" type="button" data-id-del="idBack" hidden>刪除</button>
+          </div>
+        </figure>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2>隱私與資料</h2>
+      <ul class="plain">
+        <li>地址、簽名、身分證照片只存在這台裝置的瀏覽器裡，沒有伺服器、不會上傳。</li>
+        <li>這個網頁設定了安全政策，技術上無法把資料傳到任何網址。</li>
+        <li>Word 檔只在產生 PDF 時讀取，關掉頁面就不會留下。</li>
+        <li>請用「加入主畫面」安裝，資料才不會被瀏覽器自動清掉。</li>
+      </ul>
+      <button class="btn danger" id="wipe" type="button">清除這台裝置上的所有資料</button>
+    </article>
+  </section>
+</main>
+
+<dialog id="dlg-preview" class="dlg wide">
+  <header><h3 id="preview-title">預覽</h3><button class="x" type="button" data-close aria-label="關閉">✕</button></header>
+  <div class="preview-body"><img id="preview-img" alt="報酬單預覽"></div>
+</dialog>
+
+<dialog id="dlg-sign" class="dlg">
+  <header><h3>手寫簽名</h3><button class="x" type="button" data-close aria-label="關閉">✕</button></header>
+  <p class="hint">在框裡簽名。用 Apple Pencil 會有筆壓粗細。</p>
+  <div class="pad-wrap"><canvas id="pad"></canvas><div class="pad-line" aria-hidden="true"></div></div>
+  <footer class="actions">
+    <button class="btn ghost" id="pad-undo" type="button">復原</button>
+    <button class="btn ghost" id="pad-clear" type="button">清除</button>
+    <button class="btn primary grow" id="pad-save" type="button" disabled>使用這個簽名</button>
+  </footer>
+</dialog>
+
+<dialog id="dlg-sigimg" class="dlg">
+  <header><h3>匯入簽名圖片</h3><button class="x" type="button" data-close aria-label="關閉">✕</button></header>
+  <p class="hint">在白紙上簽名後拍照最好。拉動「去背」直到背景完全消失、筆跡清楚。</p>
+  <div class="sigimg-view"><canvas id="sigimg-canvas"></canvas></div>
+  <label class="field inline"><span>去背</span><input type="range" id="sigimg-thr" min="30" max="250" step="1"></label>
+  <label class="check"><input type="checkbox" id="sigimg-black" checked> 筆跡轉成黑色</label>
+  <footer class="actions">
+    <button class="btn ghost" id="sigimg-rot" type="button">旋轉</button>
+    <button class="btn primary grow" id="sigimg-save" type="button">使用這個簽名</button>
+  </footer>
+</dialog>
+
+<dialog id="dlg-crop" class="dlg wide">
+  <header><h3 id="crop-title">裁切身分證</h3><button class="x" type="button" data-close aria-label="關閉">✕</button></header>
+  <p class="hint">拖曳四個角調整範圍，拖曳框內可以移動。</p>
+  <div class="crop-wrap"><canvas id="crop-canvas"></canvas></div>
+  <div class="actions">
+    <button class="btn ghost" id="crop-left" type="button">↺ 左轉</button>
+    <button class="btn ghost" id="crop-right" type="button">↻ 右轉</button>
+    <label class="check"><input type="checkbox" id="crop-ratio"> 鎖定身分證比例</label>
+  </div>
+  <footer class="actions"><button class="btn primary grow" id="crop-save" type="button">完成</button></footer>
+</dialog>
+
+<div id="update" class="update" hidden>
+  <span>有新版本</span>
+  <button id="update-btn" class="btn small" type="button">更新</button>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

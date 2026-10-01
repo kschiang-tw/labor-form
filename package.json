@@ -1,0 +1,15 @@
+{
+  "name": "labor-remuneration-form",
+  "private": true,
+  "type": "module",
+  "description": "勞務報酬單離線 PWA：把公司的 docx 加上地址、簽名、身分證影本後合併成 PDF",
+  "scripts": {
+    "test": "node --test \"tests/*.test.mjs\"",
+    "e2e": "node tests/e2e.mjs",
+    "icons": "node tools/make-icons.mjs",
+    "serve": "python3 -m http.server 8080"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}
