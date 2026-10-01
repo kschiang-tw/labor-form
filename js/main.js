@@ -10,6 +10,7 @@ import {
 } from './images.js';
 import { SignaturePad } from './signature.js';
 import { Cropper, ID_CARD_RATIO } from './cropper.js';
+import { APP_VERSION } from './version.js';
 
 const PX_PER_PT = 4; // PDF 解析度：4 px/pt ≈ 288 dpi
 
@@ -733,6 +734,9 @@ async function init() {
   $$('.tab').forEach((t) => t.addEventListener('click', () => showTab(t.dataset.tab)));
   $$('[data-goto]').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.goto)));
   setupDialog($('#dlg-preview'), true);
+  $$('.app-version').forEach((el) => { el.textContent = APP_VERSION; });
+  setupDialog($('#dlg-about'), true);
+  $('#about-btn').addEventListener('click', () => $('#dlg-about').showModal());
 
   $('#docx-input').addEventListener('change', async (e) => {
     const files = [...(e.target.files ?? [])];

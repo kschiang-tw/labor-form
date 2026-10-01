@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { toCapitalDigits, capitalDigitsToNumber, parseAmount, formatAmount } from '../js/numerals.js';
 import { watermarkText } from '../js/render.js';
+import { APP_VERSION } from '../js/version.js';
 
 test('國字大寫', () => {
   assert.deepEqual(toCapitalDigits(3500), ['零', '零', '參', '伍', '零', '零']);
@@ -25,12 +26,12 @@ test('金額', () => {
   assert.equal(formatAmount(1234567), '1,234,567');
 });
 
-test('頁尾版本號跟 Service Worker 的 VERSION 一致', () => {
+test('版號：語意化版本，且跟 Service Worker 的 VERSION 一致', () => {
   const sw = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
-  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  const version = /const VERSION = '([^']+)'/.exec(sw)?.[1];
-  assert.ok(version, 'sw.js 要有 VERSION');
-  assert.equal(/id="app-version">([^<]+)</.exec(html)?.[1], version);
+  assert.match(APP_VERSION, /^\d+\.\d+\.\d+$/);
+  assert.equal(/const VERSION = '([^']+)'/.exec(sw)?.[1], APP_VERSION, 'sw.js 的 VERSION 要跟 js/version.js 一樣（用 ./bump.sh 改）');
+  const changelog = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8');
+  assert.equal(/^## v(\S+)/m.exec(changelog)?.[1], APP_VERSION, 'CHANGELOG.md 最上面要有這個版本的條目');
 });
 
 test('Service Worker 快取清單涵蓋所有 app 檔案', () => {

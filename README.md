@@ -80,6 +80,7 @@ GitHub 免費方案只有公開 repo 能用 Pages。公開的只有程式碼，�
 | `js/signature.js`、`js/cropper.js` | 手寫簽名板、照片裁切 |
 | `js/store.js` | IndexedDB 存取 |
 | `sw.js` | 離線快取（Service Worker） |
+| `js/version.js`、`bump.sh` | 版號，以及更新版號的小工具 |
 
 ```bash
 npm install          # 只需要 playwright（測試用）
@@ -94,7 +95,7 @@ npm run serve        # 本機預覽 http://localhost:8080
 E2E_DOCX=a.docx,b.docx E2E_SIGNATURE=sign.png E2E_ID_FRONT=front.jpg E2E_ID_BACK=back.jpg npm run e2e
 ```
 
-**修改任何 app 檔案後，請把 `sw.js` 裡的 `VERSION` 改掉**，已安裝的裝置才會收到更新；`index.html` 頁尾顯示的版本號也要改成一樣（`npm test` 會檢查兩邊一致）。新增檔案時也要加進 `ASSETS` 清單（`npm test` 會檢查）。
+**修改任何 app 檔案後，請用 `./bump.sh patch|minor|major` 更新版號**（會同時改 `js/version.js` 和 `sw.js`，已安裝的裝置才會收到更新），並在 `CHANGELOG.md` 最上方加上這一版的紀錄。版號規則見 `CLAUDE.md`。新增檔案時也要加進 `ASSETS` 清單（`npm test` 會檢查）。
 
 ### 授權
 

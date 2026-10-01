@@ -9,6 +9,7 @@ import { extname, join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { buildDocx, FAKE } from './fixtures.mjs';
+import { APP_VERSION } from '../js/version.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = process.env.E2E_OUT ?? join(root, 'tests', 'output');
@@ -50,6 +51,15 @@ try {
   step('開啟 app');
   await page.goto(base);
   await page.waitForFunction(() => document.querySelector('#offline').textContent.includes('可離線'), null, { timeout: 30000 });
+
+  step('頁尾版號與「關於」');
+  assert.equal((await page.textContent('#about-btn')).replace(/\s+/g, ' ').trim(), `v${APP_VERSION} · 勞務報酬單 © 2026 kschiang-tw`);
+  await page.click('#about-btn');
+  await page.waitForSelector('#dlg-about[open]');
+  assert.ok((await page.textContent('#dlg-about')).includes(`v${APP_VERSION}`));
+  await page.screenshot({ path: join(outDir, 'about.png') });
+  await page.click('#dlg-about [data-close]');
+  await page.waitForSelector('#dlg-about', { state: 'hidden' });
 
   // 假的簽名與身分證圖片（在瀏覽器裡畫）
   const fakeImage = (kind) => page.evaluate((kind) => {

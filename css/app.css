@@ -372,11 +372,24 @@ input[type="range"] { width: 100%; accent-color: var(--primary); }
   padding: 16px;
   border-top: 1px solid var(--line);
   text-align: center;
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--muted);
 }
-#app-version { font-variant-numeric: tabular-nums; }
+.foot-btn {
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+.app-version { font-variant-numeric: tabular-nums; }
+
+.about { display: grid; gap: 6px; }
+.about h4 { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; color: var(--muted); }
+.about p { font-size: 14px; }
+.about-box { background: var(--surface-2); border-radius: 10px; padding: 10px 14px 10px 2em; font-size: 13px; }
 
 /* ── 對話框 ── */
 .dlg {

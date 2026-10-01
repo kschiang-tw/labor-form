@@ -138,10 +138,10 @@
   </section>
 </main>
 
-<!-- 版本號要跟 sw.js 的 VERSION 一樣（npm test 會檢查） -->
 <footer class="site-foot">
-  <p>© 2026 kschiang-tw 版權所有</p>
-  <p>版本 <span id="app-version">2026-10-01.5</span></p>
+  <button class="foot-btn" id="about-btn" type="button" aria-haspopup="dialog">
+    v<span class="app-version"></span> · 勞務報酬單 © 2026 kschiang-tw
+  </button>
 </footer>
 
 <dialog id="dlg-preview" class="dlg wide">
@@ -182,6 +182,27 @@
     <label class="check"><input type="checkbox" id="crop-ratio"> 鎖定身分證比例</label>
   </div>
   <footer class="actions"><button class="btn primary grow" id="crop-save" type="button">完成</button></footer>
+</dialog>
+
+<dialog id="dlg-about" class="dlg">
+  <header>
+    <div>
+      <h3>勞務報酬單</h3>
+      <p class="hint">離線產生勞務報酬單 PDF · v<span class="app-version"></span></p>
+    </div>
+    <button class="x" type="button" data-close aria-label="關閉">✕</button>
+  </header>
+  <section class="about">
+    <h4>版權聲明</h4>
+    <p>© 2026 kschiang-tw. All rights reserved.</p>
+  </section>
+  <section class="about">
+    <h4>字型與元件授權</h4>
+    <ul class="plain about-box">
+      <li>字型 Noto Sans TC，SIL OFL 1.1</li>
+      <li>Word 檔解壓縮 fflate，MIT License</li>
+    </ul>
+  </section>
 </dialog>
 
 <div id="update" class="update" hidden>

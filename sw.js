@@ -1,7 +1,8 @@
 // 離線快取：第一次打開時把整個 app 存到裝置上，之後完全不需要網路。
 // 這裡只快取 app 本身的檔案；個人資料存在 IndexedDB，不經過這裡。
-// 每次更新 app 檔案時，請把 VERSION 改掉，index.html 頁尾的版本號也要一起改。
-const VERSION = '2026-10-01.5';
+// 每次更新 app 檔案時都要換 VERSION，已安裝的裝置才會收到更新。
+// 跟 js/version.js 的版號相同，用 ./bump.sh 一起改。
+const VERSION = '2.1.0';
 const CACHE = `labor-form-${VERSION}`;
 const ASSETS = [
   './',
@@ -17,6 +18,7 @@ const ASSETS = [
   'js/images.js',
   'js/signature.js',
   'js/cropper.js',
+  'js/version.js',
   'vendor/fflate.js',
   'fonts/NotoSansTC-Regular.woff2',
   'fonts/NotoSansTC-Medium.woff2',
