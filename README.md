@@ -25,7 +25,7 @@ GitHub 免費方案只有公開 repo 能用 Pages。公開的只有程式碼，�
 1. GitHub repo 頁面 → **Settings** → **General** → 最下面 **Danger Zone** → **Change visibility** → **Make public**。
 2. **Settings** → **Pages** → **Build and deployment**：
    - Source 選 **Deploy from a branch**
-   - Branch 選放這份程式的分支，資料夾選 **/ (root)**，按 **Save**
+   - Branch 選 **main**，資料夾選 **/ (root)**，按 **Save**
 3. 等一兩分鐘，頁面上方會出現網址，例如 `https://<你的帳號>.github.io/Labor-Remuneration-Form-for-Fred/`。
 
 ### 2. 裝到 iPad／手機
