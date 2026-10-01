@@ -253,8 +253,9 @@ export function watermarkPhoto(img, text) {
   g.lineWidth = Math.max(1, size * 0.07);
   g.strokeStyle = 'rgba(90, 90, 90, 0.2)';
   g.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  const stepX = g.measureText(text).width + size * 1.5;
-  const stepY = size * 2.6;
+  // 行距與字距拉寬一點，證件上的字才看得清楚
+  const stepX = g.measureText(text).width + size * 4;
+  const stepY = size * 4.2;
   const r = Math.hypot(w, h) / 2 + stepX;
   for (let y = -r, row = 0; y <= r; y += stepY, row++) {
     // 每一行錯開，看起來不會排成直的一整排
