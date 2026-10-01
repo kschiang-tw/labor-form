@@ -132,6 +132,41 @@ try {
   assert.equal(+/\/Count (\d+)/.exec(pdf)[1], docs.length);
   console.log(`  已存到 ${pdfPath}`);
 
+  step('身分證浮水印已經畫進照片裡');
+  const raw = readFileSync(pdfPath);
+  const jpegs = [...pdf.matchAll(/\/DCTDecode \/Length (\d+) >>\nstream\n/g)].map((m) => raw.subarray(m.index + m[0].length, m.index + m[0].length + +m[1]));
+  if (!process.env.E2E_DOCX) assert.equal(jpegs.length, 2, '兩頁同一家公司：正反面照片各只存一次');
+  // 拿 PDF 裡的照片跟這台裝置存的原始照片比對：浮水印的筆畫會讓一部分像素明顯不同
+  const changed = await page.evaluate(async (b64s) => {
+    const db = await new Promise((r) => { const q = indexedDB.open('labor-form', 1); q.onsuccess = () => r(q.result); });
+    const get = (k) => new Promise((r) => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => r(q.result); });
+    const decode = async (bytes) => {
+      const bmp = await createImageBitmap(new Blob([bytes], { type: 'image/jpeg' }));
+      const c = new OffscreenCanvas(bmp.width, bmp.height);
+      const g = c.getContext('2d');
+      g.drawImage(bmp, 0, 0);
+      return g.getImageData(0, 0, bmp.width, bmp.height);
+    };
+    const out = [];
+    for (const [i, key] of [[0, 'idFront'], [1, 'idBack']]) {
+      if (!b64s[i]) continue;
+      const orig = await decode((await get(key)).bytes);
+      const pdf = await decode(Uint8Array.from(atob(b64s[i]), (c) => c.charCodeAt(0)));
+      if (orig.width !== pdf.width || orig.height !== pdf.height) { out.push(-1); continue; }
+      let n = 0;
+      for (let j = 0; j < orig.data.length; j += 4) {
+        const d = Math.abs(orig.data[j] - pdf.data[j]) + Math.abs(orig.data[j + 1] - pdf.data[j + 1]) + Math.abs(orig.data[j + 2] - pdf.data[j + 2]);
+        if (d > 60) n++;
+      }
+      out.push(n / (orig.data.length / 4));
+    }
+    return out;
+  }, jpegs.map((j) => Buffer.from(j).toString('base64')));
+  for (const ratio of changed) {
+    console.log(`  照片上被浮水印改變的像素：${(ratio * 100).toFixed(1)}%`);
+    assert.ok(ratio > 0.02, '照片裡要有浮水印');
+  }
+
   step('離線：斷網後重新開啟');
   await context.setOffline(true);
   await page.reload();

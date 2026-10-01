@@ -1,11 +1,11 @@
 import { readDocxParagraphs } from './docx.js';
 import { parseForm, sortKey, yearMonth } from './parse.js';
 import { parseAmount, formatAmount, toCapitalDigits, CAPITAL_UNITS } from './numerals.js';
-import { PAGE, drawSignatureRow, ensureFonts, renderToCanvas } from './render.js';
+import { PAGE, drawSignatureRow, ensureFonts, renderToCanvas, watermarkPhoto, watermarkText } from './render.js';
 import { buildPdf, encodeRgb } from './pdf.js';
 import { store, requestPersistence } from './store.js';
 import {
-  loadImageFile, downscale, recordFromCanvas, recordToBlob, decodeRecord,
+  loadImageFile, downscale, recordFromCanvas, recordToBlob, decodeRecord, canvasToBlob,
   trimTransparent, removeBackground, luminance, otsuThreshold,
 } from './images.js';
 import { SignaturePad } from './signature.js';
@@ -144,6 +144,7 @@ async function saveSetting(key, value) {
   }
   state.settings[key] = value;
   if (key !== 'address') state.images[key] = await decodeRecord(value);
+  if (key === 'idFront' || key === 'idBack') watermarked.clear();
   requestPersistence();
   invalidateResult();
   refreshSetupState();
@@ -326,6 +327,7 @@ function setupWipe() {
     await store.clear();
     state.settings = { address: '', signature: null, idFront: null, idBack: null };
     state.images = { signature: null, idFront: null, idBack: null };
+    watermarked.clear();
     $('#address').value = '';
     clearForms();
     refreshSetupState();
@@ -340,6 +342,21 @@ function resolvedData(form) {
   const d = form.data;
   const mail = form.mailOverride ?? (state.settings.address.trim() || d.mailAddress);
   return { ...d, mailAddress: mail };
+}
+
+// 加了浮水印的身分證照片，依浮水印文字快取（同一個月通常都是同一家公司）
+const watermarked = new Map();
+
+/** 這一份報酬單要用的簽名與身分證（身分證已加浮水印） */
+function formAssets(form) {
+  const text = watermarkText(form.data.company);
+  if (!watermarked.has(text)) {
+    watermarked.set(text, {
+      idFront: state.images.idFront ? watermarkPhoto(state.images.idFront, text) : null,
+      idBack: state.images.idBack ? watermarkPhoto(state.images.idBack, text) : null,
+    });
+  }
+  return { signature: state.images.signature, ...watermarked.get(text) };
 }
 
 async function addFiles(files) {
@@ -566,7 +583,7 @@ function buildEditor(form, box, card) {
 async function preview(form) {
   await ensureFonts();
   const dlg = $('#dlg-preview');
-  const { canvas } = renderToCanvas(resolvedData(form), state.images, 2, { photos: true });
+  const { canvas } = renderToCanvas(resolvedData(form), formAssets(form), 2, { photos: true });
   const img = $('#preview-img');
   if (img.dataset.url) URL.revokeObjectURL(img.dataset.url);
   const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
@@ -606,23 +623,31 @@ async function makePdf() {
     progress.textContent = '準備字型…';
     await ensureFonts();
     const images = {};
-    if (state.settings.idFront) images.front = { kind: 'jpeg', bytes: new Uint8Array(state.settings.idFront.bytes) };
-    if (state.settings.idBack) images.back = { kind: 'jpeg', bytes: new Uint8Array(state.settings.idBack.bytes) };
+    const photoKeys = new Map(); // 加好浮水印的照片 → PDF 裡的圖片名稱（同一張只存一次）
     const pages = [];
     const n = state.forms.length;
     for (let i = 0; i < n; i++) {
       progress.textContent = `正在產生第 ${i + 1} / ${n} 頁…`;
       await nextFrame();
-      const { canvas, ctx, photos } = renderToCanvas(resolvedData(state.forms[i]), state.images, PX_PER_PT, { photos: false });
+      const assets = formAssets(state.forms[i]);
+      const { canvas, ctx, photos } = renderToCanvas(resolvedData(state.forms[i]), assets, PX_PER_PT, { photos: false });
       const rgba = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
       const key = `page${i}`;
       images[key] = { kind: 'rgb', width: canvas.width, height: canvas.height, bytes: encodeRgb(rgba, canvas.width, canvas.height) };
       canvas.width = 0;
       canvas.height = 0;
-      pages.push([
-        { image: key, x: 0, y: 0, w: PAGE.w, h: PAGE.h },
-        ...photos.filter((p) => images[p.key]).map((p) => ({ image: p.key, x: p.x, y: p.y, w: p.w, h: p.h })),
-      ]);
+      const layers = [{ image: key, x: 0, y: 0, w: PAGE.w, h: PAGE.h }];
+      for (const p of photos) {
+        const photo = p.key === 'front' ? assets.idFront : assets.idBack;
+        if (!photoKeys.has(photo)) {
+          const name = `photo${photoKeys.size}`;
+          const blob = await canvasToBlob(photo, 'image/jpeg', 0.92);
+          images[name] = { kind: 'jpeg', bytes: new Uint8Array(await blob.arrayBuffer()) };
+          photoKeys.set(photo, name);
+        }
+        layers.push({ image: photoKeys.get(photo), x: p.x, y: p.y, w: p.w, h: p.h });
+      }
+      pages.push(layers);
     }
     progress.textContent = '組合 PDF…';
     await nextFrame();

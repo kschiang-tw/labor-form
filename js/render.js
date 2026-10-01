@@ -221,6 +221,52 @@ export const PHOTO_BOX = {
 
 const SIGN_BOX = { x: 246.5, y: 524, w: 129, h: 40 };
 
+/** 身分證浮水印文字，公司名稱取自 Word 檔 */
+export function watermarkText(company) {
+  return `限${(company ?? '').trim()}勞務報酬單使用`;
+}
+
+/**
+ * 把浮水印直接畫進身分證照片的像素裡。
+ * 不另外疊一層，PDF 裡就拿不到沒有浮水印的原圖。
+ * @returns {HTMLCanvasElement}
+ */
+export function watermarkPhoto(img, text) {
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const g = c.getContext('2d');
+  g.drawImage(img, 0, 0, w, h);
+  if (!text) return c;
+  // 常見的身分證影本浮水印：小字、往右下斜、整張重複鋪滿；
+  // 白字加淡灰邊，深色和淺色的地方都看得到，又不會蓋掉證件上的字
+  const size = Math.max(9, w * 0.03);
+  g.save();
+  g.translate(w / 2, h / 2);
+  g.rotate(0.2);
+  g.font = `${BOLD} ${size}px ${FONT_STACK}`;
+  g.textAlign = 'left';
+  g.textBaseline = 'middle';
+  g.lineJoin = 'round';
+  g.lineWidth = Math.max(1, size * 0.08);
+  g.strokeStyle = 'rgba(60, 60, 60, 0.35)';
+  g.fillStyle = 'rgba(255, 255, 255, 0.6)';
+  const stepX = g.measureText(text).width + size * 1.5;
+  const stepY = size * 2.6;
+  const r = Math.hypot(w, h) / 2 + stepX;
+  for (let y = -r, row = 0; y <= r; y += stepY, row++) {
+    // 每一行錯開，看起來不會排成直的一整排
+    for (let x = -r - ((row * size * 3.7) % stepX); x <= r; x += stepX) {
+      g.strokeText(text, x, y);
+      g.fillText(text, x, y);
+    }
+  }
+  g.restore();
+  return c;
+}
+
 /** 簽名列：黃底、「領款人:」、簽名線、簽名、（簽章）、日期 */
 export function drawSignatureRow(ctx, signature, signDate) {
   const pen = new Pen(ctx);
@@ -243,7 +289,7 @@ export function drawSignatureRow(ctx, signature, signDate) {
  * @param {CanvasRenderingContext2D} ctx 已設定好 pt→px 轉換的 context
  * @param {object} f 表單資料（parse.js 的 emptyForm 格式，mailAddress 已決定好）
  * @param {{signature?: CanvasImageSource & {width:number,height:number}, idFront?: any, idBack?: any}} assets
- * @param {{photos?: boolean}} options photos=false 時不畫身分證（PDF 會另外嵌入原圖）
+ * @param {{photos?: boolean}} options photos=false 時不畫身分證（PDF 會另外嵌入照片）
  * @returns {{photos: Array<{key: string, x: number, y: number, w: number, h: number}>}}
  */
 export function drawForm(ctx, f, assets = {}, { photos = true } = {}) {

@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { toCapitalDigits, capitalDigitsToNumber, parseAmount, formatAmount } from '../js/numerals.js';
+import { watermarkText } from '../js/render.js';
 
 test('國字大寫', () => {
   assert.deepEqual(toCapitalDigits(3500), ['零', '零', '參', '伍', '零', '零']);
@@ -10,6 +11,11 @@ test('國字大寫', () => {
   assert.equal(capitalDigitsToNumber(['零', '零', '參', '貳', '零', '零']), 3200);
   assert.equal(capitalDigitsToNumber(['零', '零', '叁', '二', '〇', '0']), 3200);
   assert.equal(capitalDigitsToNumber(['零', '零', '？', '貳', '零', '零']), null);
+});
+
+test('身分證浮水印文字', () => {
+  assert.equal(watermarkText('測試股份有限公司'), '限測試股份有限公司勞務報酬單使用');
+  assert.equal(watermarkText(''), '限勞務報酬單使用');
 });
 
 test('金額', () => {
