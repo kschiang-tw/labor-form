@@ -250,8 +250,8 @@ export function watermarkPhoto(img, text) {
   g.textAlign = 'left';
   g.textBaseline = 'middle';
   g.lineJoin = 'round';
-  g.lineWidth = Math.max(1, size * 0.08);
-  g.strokeStyle = 'rgba(60, 60, 60, 0.35)';
+  g.lineWidth = Math.max(1, size * 0.07);
+  g.strokeStyle = 'rgba(90, 90, 90, 0.2)';
   g.fillStyle = 'rgba(255, 255, 255, 0.6)';
   const stepX = g.measureText(text).width + size * 1.5;
   const stepY = size * 2.6;

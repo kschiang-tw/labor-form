@@ -1,7 +1,7 @@
 // 離線快取：第一次打開時把整個 app 存到裝置上，之後完全不需要網路。
 // 這裡只快取 app 本身的檔案；個人資料存在 IndexedDB，不經過這裡。
 // 每次更新 app 檔案時，請把 VERSION 改掉。
-const VERSION = '2026-10-01.2';
+const VERSION = '2026-10-01.3';
 const CACHE = `labor-form-${VERSION}`;
 const ASSETS = [
   './',
